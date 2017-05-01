@@ -5,14 +5,7 @@
 
 using namespace std;
 
-typedef int(*_stdcall SET_INT)(LPCWSTR lpValueName, BYTE Data);
-
-wchar_t *convertCharArrayToLPCWSTR(const char* charArray)
-{
-	wchar_t* wString = new wchar_t[4096];
-	MultiByteToWideChar(CP_ACP, 0, charArray, -1, wString, 4096);
-	return wString;
-}
+typedef int(*_stdcall MOVE_CARDS)(HWND);
 
 void handle_freecell()
 {
@@ -62,21 +55,36 @@ void handle_freecell()
 
 	// Rq 3: Next valid move will win the game.
 
+	// get handle of current window.
+	HWND hwnd = GetForegroundWindow();
+	// change moveindex int stored in memory to 53 so that the transfer loop in move_cards is repeated for all 52 cards.
+	*(unsigned int *)0x01007864 = 53;
 
+	// call the move_cards function.
+	MOVE_CARDS move_cards_fcn = (MOVE_CARDS)0x01004FC7;
+	move_cards_fcn(hwnd);
 	
 
 
+
 	// Rq 4: Change 'Abort' dialog option when using Ctrl-Shift-F10 cheat code to automatically win game.
+	
 	HINSTANCE hinstAcc;
 	HACCEL old_haccel = LoadAccelerators(hinstAcc, L"FREEMENU");
 
-	ACCEL accelerator[8];
+	ACCEL accelerator[9];
 	CopyAcceleratorTable(old_haccel, accelerator, 8);
 
 	// 0x0D  = CONTROL, SHIFT, VIRTKEY
 	// 114   = Key of accelerator that brings up 'Abort' dialog box.
 	// VK_F6 = Makes F6 the accelerator.
 	accelerator[7] = { 0x0D, 114, VK_F6 };
+	
+	// this is actually for Rq 5, but creating now so that I will not have to repeat accelerator table creation in Rq 5.
+	// 0x0D  = CONTROL, SHIFT, VIRTKEY
+	// 114   = Key of accelerator that brings up 'Abort' dialog box.
+	// VK_F2 = Makes F2 the accelerator.
+	accelerator[8] = { 0x0D, 116, VK_F2 };
 
 	// remove old accelerator table.
 	DestroyAcceleratorTable(old_haccel);
@@ -90,6 +98,10 @@ void handle_freecell()
 
 	// Rq 5: Create cheat code that when Ctrl-Shift-F2 to win the game.
 
+	// wasn't sure how to program this Rq, but I believe that you need to add a 16th case (case for ID 116) for the switch statement located at 0x01001EA1
+	// then have that case point to loc_10020ED at 0x010020ED which is where the Rq 4 cheat takes you after pressing 'Abort', thus doing the same cheat as Rq 4, but 
+	// skipping the message box as desired.
+	// NOTE: this is based upon the assumption that you don't mean by using this cheat, you auto win with no card movement required.
 	
 }
 
